@@ -2,6 +2,11 @@
 
 A specialized set of Scrapy spiders designed to extract multiple websites from Machine Learning and AI Academic Infrastructure, coupled with a Google Gemini integration to synthesize trends, themes, and community sentiment.
 
+## Work-In-Progress:
+- [X] Markdown Sucks
+- [ ] More Website like HackerNews and Twitter to be added with their own spiders.
+- [ ] A Terminal UI 
+
 ## Repository Structure
 
 ```text
