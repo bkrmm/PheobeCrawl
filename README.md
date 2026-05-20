@@ -18,6 +18,7 @@ bkrmm-pheobecrawl/
     └── spiders/
         ├── __init__.py
         └── reddit.py         # The core reddit spider: scrapes r/MachineLearning & r/ArtificialInteligence
+```
 
 ## Features:
 
@@ -38,52 +39,43 @@ bkrmm-pheobecrawl/
 
     Clone the repository:
 
-    ```
 ```bash
     git clone https://github.com/bkrmm/PheobeCrawl.git
     cd pheobecrawl
 ```
-```
 
     Install dependencies:
 
-    ```
 ```bash
     python -m pip install scrapy google-genai python-dotenv
-```
 ```
 
     Configure Environment:
     Create a .env file in the root directory and add your API key:
 
-    ```
 ```bash
     GOOGLE_API_KEY = "your_actual_api_key_here"
   ```
-```
 
 
-🏃‍♂️ Usage
+## Usage
 Step 1: Run the Spider
 Execute the Scrapy spider to gather data. Results are automatically saved to the output/ directory as JSON.
 
-```
 ```bash
 python gemini_insights.py
-```
 ```
 
 Step 2: Generate Insights
 Run the Gemini analysis script on the generated JSON file. 
 Note: Ensure the json_file_path in gemini_insights.py matches your latest output file if not using the default timestamp.
 
-```
+
 ```bash
 python gemini_insights.py
 ```
 
-
-⚙️ Configuration Highlights
+## Configuration Highlights
 
     Output Format: JSON files are saved in output/reddit_<timestamp>.json.
     Throttling: 
