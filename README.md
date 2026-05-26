@@ -23,6 +23,7 @@ bkrmm-pheobecrawl/
     └── spiders/
         ├── __init__.py
         └── reddit.py         # The core reddit spider: scrapes r/MachineLearning & r/ArtificialInteligence
+        └── hackernews.py     # The core hackernews spider: scrapes https://news.ycombinator.com/ and follows every post to its original article.
 ```
 
 ## Features:
