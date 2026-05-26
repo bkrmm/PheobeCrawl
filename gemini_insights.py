@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import os
 import json
 import time
+import glob
 
 
 load_dotenv()
@@ -12,24 +13,55 @@ if not api_key:
     raise ValueError("Get the fucking API Key, STUPID!")
 print("✅ API Key Detected.")
 
-json_file_path = "output/reddit_2026-05-19T17-30-21+00-00.json"
-
-try:
-    with open(json_file_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    
-    filtered_data = [
-        {"title": item.get("title"), "subreddit": item.get("subreddit")} 
-        for item in data
-    ]
-    print(f"✅ Loaded and filtered {len(filtered_data)} entries from {json_file_path}")
-
-except FileNotFoundError:
-    print(f"❌ Error: File not found at {json_file_path}")
+# Find all JSON files in the output directory
+json_files = glob.glob("output/*.json")
+if not json_files:
+    print("❌ Error: No JSON files found in output directory")
     exit(1)
-except json.JSONDecodeError:
-    print(f"❌ Error: Failed to decode JSON from {json_file_path}")
+
+all_data = []
+for file_path in json_files:
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+            # Identify source based on filename
+            source = "reddit" if "reddit" in file_path.lower() else "hackernews" if "hackernews" in file_path.lower() else "unknown"
+            
+            for item in data:
+                # Handle different data structures
+                if item.get("type") == "post":
+                    all_data.append({
+                        "source": source,
+                        "type": "post",
+                        "title": item.get("title"),
+                        "context": item.get("subreddit") or item.get("url")
+                    })
+                elif "comment_text" in item:
+                    all_data.append({
+                        "source": source,
+                        "type": "comment",
+                        "text": item.get("comment_text"),
+                        "post_title": item.get("post_title")
+                    })
+                # Fallback for old reddit format in the original script
+                elif "title" in item and "subreddit" in item:
+                    all_data.append({
+                        "source": source,
+                        "type": "post",
+                        "title": item.get("title"),
+                        "context": item.get("subreddit")
+                    })
+
+        print(f"✅ Loaded data from {file_path}")
+    except Exception as e:
+        print(f"❌ Error loading {file_path}: {e}")
+
+if not all_data:
+    print("❌ No valid data extracted from JSON files.")
     exit(1)
+
+print(f"✅ Total entries collected: {len(all_data)}")
 
 # Gemini Client
 client = genai.Client(api_key=api_key)
@@ -49,14 +81,14 @@ def generate_with_retry(prompt, model="gemini-3.1-flash-lite", max_retries=3):
 
 # Chunking, FUCK RATE LIMITS
 CHUNK_SIZE = 50
-chunks = [filtered_data[i:i + CHUNK_SIZE] for i in range(0, len(filtered_data), CHUNK_SIZE)]
+chunks = [all_data[i:i + CHUNK_SIZE] for i in range(0, len(all_data), CHUNK_SIZE)]
 chunk_summaries = []
 
 print(f"🚀 Processing {len(chunks)} chunks of data using { 'gemini-3.1-flash-lite' }...")
 
 for i, chunk in enumerate(chunks):
     chunk_str = json.dumps(chunk, indent=2)
-    prompt = f"Summarize the key trends and topics in these Reddit posts:\n\n{chunk_str}"
+    prompt = f"Summarize the key trends, topics, and discussions in these posts and comments from Reddit and Hacker News:\n\n{chunk_str}"
     
     try:
         response = generate_with_retry(prompt)
@@ -71,11 +103,11 @@ for i, chunk in enumerate(chunks):
 if chunk_summaries:
     print("\n🚀 Generating final synthesis...")
     final_prompt = f"""
-    The following are summaries of several chunks of Reddit data regarding Machine Learning.
+    The following are summaries of several chunks of data from Reddit and Hacker News regarding technology and Machine Learning.
     Please synthesize these into one final, comprehensive report highlighting:
     1. Major Trends
-    2. Recurring Themes
-    3. Community Sentiment
+    2. Recurring Themes across different platforms
+    3. Community Sentiment (comparing Reddit vs Hacker News if applicable)
     
     Summaries:
     {"\n\n".join(chunk_summaries)}
